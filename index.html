@@ -35,6 +35,7 @@
            This hides the visual scrollbar without breaking the scrolling physics
         */
         body {
+            overflow-x: hidden;
             background-color: var(--bg-color);
             color: var(--text-main);
             line-height: 1.6;
@@ -154,19 +155,29 @@
         }
 
         /* Animated Mascot Container */
+        /* 1. Update the wrapper to be more robust for iOS */
         .animated-mascot-wrapper {
+            /* Ensure the wrapper doesn't shrink when it moves */
+            flex-shrink: 0;
             position: fixed;
-            top: 90px;
+            top: 0;
             left: 0;
-            /* Flexbox keeps the bubble and image centered together */
+            width: 100vw; /* Span the whole width */
+            height: 100vh; /* Span the whole height */
+            z-index: 999;
+            pointer-events: none;
+            display: flex;
+            justify-content: center; /* Helper for centering */
+        }
+
+        /* 2. Create an inner "Actor" div to hold the mascot and bubble */
+        .mascot-actor {
+            position: absolute;
             display: flex;
             flex-direction: column;
             align-items: center;
-            z-index: 100;
-            pointer-events: none;
-            /* Move the whole unit */
+            /* This animation will now animate inside a container that spans the whole screen */
             animation: mascotWalkSequence 30s infinite linear;
-            opacity: 0.8;
         }
 
         .animated-mascot-wrapper .mascot-img {
@@ -338,30 +349,11 @@
 
         /* Keyframes for Mascot Animation: Walking across and out opposite corners */
         @keyframes mascotWalkSequence {
-            0% {
-                transform: translate(-60px, 30px); /* Start off-screen top left */
-            }
-            15% {
-                transform: translate(calc(100vw + 60px), 30px); /* Walk across top */
-            }
-            15.1% {
-                transform: translate(calc(100vw + 60px), 0px); /* Flip right side */
-            }
-            45% {
-                transform: translate(-60px, calc(100vh - 150px)); /* Walk diagonally to bottom left */
-            }
-            45.1% {
-                transform: translate(-60px, calc(100vh - 150px)); /* Flip left side */
-            }
-            75% {
-                transform: translate(calc(100vw + 60px), calc(100vh - 150px)); /* Walk across bottom */
-            }
-            75.1% {
-                transform: translate(calc(100vw + 60px), calc(100vh - 150px)); /* Flip right side */
-            }
-            100% {
-                transform: translate(-60px, 30px); /* Walk diagonally back to top left start */
-            }
+            0% { left: -100px; top: 120px; }
+            25% { left: 100vw; top: 120px; }
+            50% { left: -100px; top: 80vh; }
+            75% { left: 100vw; top: 80vh; }
+            100% { left: -100px; top: 120px; }
         }
 
         /* Keyframes for speech bubble fade in/out */
@@ -382,8 +374,10 @@
 <body>
 
     <div class="animated-mascot-wrapper">
-        <div class="mascot-speech">Welcome to Gill Dev!</div>
-        <img src="assets/jerry.png" alt="Walking Jerry Mascot" class="mascot-img">
+        <div class="mascot-actor">
+            <div class="mascot-speech">Welcome to Gill Dev!</div>
+            <img src="assets/jerry.png" alt="Walking Jerry Mascot" class="mascot-img">
+        </div>
     </div>
 
     <header>
