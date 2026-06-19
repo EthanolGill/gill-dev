@@ -101,7 +101,7 @@
         /* Speech bubble styles */
         .mascot-speech {
             position: absolute;
-            bottom: 120%;
+            bottom: 110%;
             left: 50%;
             transform: translateX(-50%);
             background-color: #fff;
@@ -111,10 +111,9 @@
             font-size: 0.8rem;
             font-weight: 600;
             white-space: nowrap;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
             opacity: 0;
             pointer-events: none;
-            animation: fadeInOutSpeech 7s infinite;
         }
 
         /* Speech bubble triangle */
@@ -155,34 +154,30 @@
         }
 
         /* Animated Mascot Container */
-        /* 1. Update the wrapper to be more robust for iOS */
         .animated-mascot-wrapper {
-            /* Ensure the wrapper doesn't shrink when it moves */
             flex-shrink: 0;
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw; /* Span the whole width */
-            height: 100vh; /* Span the whole height */
-            z-index: 999;
+            width: 100vw;
+            height: 100vh;
+            z-index: 100;
             pointer-events: none;
-            display: flex;
-            justify-content: center; /* Helper for centering */
+            opacity: 0.9;
         }
 
-        /* 2. Create an inner "Actor" div to hold the mascot and bubble */
         .mascot-actor {
-            position: absolute;
+            position: fixed;
             display: flex;
             flex-direction: column;
             align-items: center;
-            /* This animation will now animate inside a container that spans the whole screen */
-            animation: mascotWalkSequence 30s infinite linear;
         }
 
         .animated-mascot-wrapper .mascot-img {
-            width: 90%;
-            height: 100%;
+            width: 56px;
+            height: 56px;
+            object-fit: contain;
+            display: block;
         }
 
         /* Hero Section */
@@ -347,19 +342,16 @@
             border-top: 1px solid var(--border);
         }
 
-        /* Keyframes for Mascot Animation: Walking across and out opposite corners */
-        @keyframes mascotWalkSequence {
-            0% { left: -100px; top: 120px; }
-            25% { left: 100vw; top: 120px; }
-            50% { left: -100px; top: 80vh; }
-            75% { left: 100vw; top: 80vh; }
-            100% { left: -100px; top: 120px; }
+        /* Speech bubble fade keyframes — driven by JS class toggling */
+        @keyframes fadeInOutSpeech {
+            0% { opacity: 0; transform: translateX(-50%) translateY(8px); }
+            15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            80% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(8px); }
         }
 
-        /* Keyframes for speech bubble fade in/out */
-        @keyframes fadeInOutSpeech {
-            0%, 10%, 90%, 100% { opacity: 0; transform: translateX(-50%) translateY(10px); }
-            20%, 80% { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .mascot-speech.visible {
+            animation: fadeInOutSpeech 4s ease forwards;
         }
 
         /* Responsive Design */
@@ -461,8 +453,12 @@
     </footer>
 
     <script>
-        const speechBubble = document.querySelector('.mascot-speech');
-        // Add whatever phrases you want him to say here
+        // ─── Mascot Walk & Speech System ───────────────────────────────────────
+
+        const actor = document.querySelector('.mascot-actor');
+        const bubble = document.querySelector('.mascot-speech');
+        const mascotSize = 56;
+
         const phrases = [
             "Welcome to Gill Dev!",
             "I'm Jerry. I'm sure happy to see you!",
@@ -477,11 +473,149 @@
         ];
         let phraseIndex = 0;
 
-        // Changes the text every 5 seconds (matching your CSS fade animation)
-        setInterval(() => {
+        // ── Sides: 0=top, 1=right, 2=bottom, 3=left ─────────────────────────
+
+        function getRandomEntry(excludeSide) {
+            // Pick a random side that is NOT the excluded one
+            let sides = [0, 1, 2, 3].filter(s => s !== excludeSide);
+            let side = sides[Math.floor(Math.random() * sides.length)];
+            let x, y;
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+
+            if (side === 0) { // top
+                x = Math.random() * vw;
+                y = -mascotSize;
+            } else if (side === 1) { // right
+                x = vw + mascotSize;
+                y = Math.random() * vh;
+            } else if (side === 2) { // bottom
+                x = Math.random() * vw;
+                y = vh + mascotSize;
+            } else { // left
+                x = -mascotSize;
+                y = Math.random() * vh;
+            }
+            return { x, y, side };
+        }
+
+        function getRandomExit(excludeSide) {
+            // Pick a random destination on a side that is NOT the entry side
+            let sides = [0, 1, 2, 3].filter(s => s !== excludeSide);
+            let side = sides[Math.floor(Math.random() * sides.length)];
+            let x, y;
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+
+            if (side === 0) {
+                x = Math.random() * vw;
+                y = -mascotSize;
+            } else if (side === 1) {
+                x = vw + mascotSize;
+                y = Math.random() * vh;
+            } else if (side === 2) {
+                x = Math.random() * vw;
+                y = vh + mascotSize;
+            } else {
+                x = -mascotSize;
+                y = Math.random() * vh;
+            }
+            return { x, y, side };
+        }
+
+        // ── Animation state ──────────────────────────────────────────────────
+
+        let curX = 0, curY = 0;
+        let targetX = 0, targetY = 0;
+        let lastEntrySide = -1;
+        let lastExitSide = -1;
+        let isOffscreen = true;
+        let speed = 90; // px per second
+
+        function startNewTrip() {
+            const entry = getRandomEntry(lastExitSide);
+            curX = entry.x;
+            curY = entry.y;
+            lastEntrySide = entry.side;
+
+            const exit = getRandomExit(lastEntrySide);
+            targetX = exit.x;
+            targetY = exit.y;
+            lastExitSide = exit.side;
+
+            // Vary speed a little each trip
+            speed = 150;
+            isOffscreen = false;
+
+            actor.style.left = curX + 'px';
+            actor.style.top = curY + 'px';
+
+            // Flip image based on horizontal direction
+            const dx = targetX - curX;
+            actor.querySelector('.mascot-img').style.transform = dx < 0 ? 'scaleX(-1)' : 'scaleX(1)';
+        }
+
+        let lastTime = null;
+
+        function tick(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            const dt = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+
+            if (!isOffscreen) {
+                const dx = targetX - curX;
+                const dy = targetY - curY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < speed * dt) {
+                    // Reached the exit wall — go offscreen properly then restart
+                    curX = targetX;
+                    curY = targetY;
+                    actor.style.left = curX + 'px';
+                    actor.style.top = curY + 'px';
+                    isOffscreen = true;
+                    setTimeout(startNewTrip, 50);
+                } else {
+                    const nx = dx / dist;
+                    const ny = dy / dist;
+                    curX += nx * speed * dt;
+                    curY += ny * speed * dt;
+                    actor.style.left = curX + 'px';
+                    actor.style.top = curY + 'px';
+                }
+            }
+
+            requestAnimationFrame(tick);
+        }
+
+        // ── Speech bubble system (random delay between bubbles) ──────────────
+
+        function showNextPhrase() {
             phraseIndex = (phraseIndex + 1) % phrases.length;
-            speechBubble.textContent = phrases[phraseIndex];
-        }, 7000); 
+            bubble.textContent = phrases[phraseIndex];
+
+            // Reset animation
+            bubble.classList.remove('visible');
+            // Force reflow so the animation re-triggers
+            void bubble.offsetWidth;
+            bubble.classList.add('visible');
+
+            // Remove class after animation so it can retrigger next time
+            bubble.addEventListener('animationend', () => {
+                bubble.classList.remove('visible');
+            }, { once: true });
+
+            // Schedule next bubble with a random delay (5–18 seconds)
+            const delay = 7500;
+            setTimeout(showNextPhrase, delay);
+        }
+
+        // ── Kick everything off ──────────────────────────────────────────────
+        startNewTrip();
+        requestAnimationFrame(tick);
+
+        // First speech bubble after a short random delay
+        setTimeout(showNextPhrase, 500);
     </script>
 
 </body>
