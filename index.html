@@ -463,9 +463,9 @@
             "Welcome to Gill Dev!",
             "I'm Jerry. I'm sure happy to see you!",
             "Need a website?",
-            "Automate your workflow!",
-            "Let's build something!",
-            "Jerry sees a business opportunity in our future.",
+            "Let's automate your workflow!",
+            "We could build something too.",
+            "I see a business opportunity in our future.",
             "We would make a great team, you know!",
             "A strong-willed heart will uncover the road to prosperity.",
             "Sorry, I was just reading my fortune cookie.",
@@ -473,52 +473,40 @@
         ];
         let phraseIndex = 0;
 
-        // ── Sides: 0=top, 1=right, 2=bottom, 3=left ─────────────────────────
+        // ── Sides: 0=top, 2=bottom only (vertical travel prevents bubble clipping) ──
 
         function getRandomEntry(excludeSide) {
-            // Pick a random side that is NOT the excluded one
-            let sides = [0, 1, 2, 3].filter(s => s !== excludeSide);
+            // Only top (0) and bottom (2), excluding the last exit side
+            let sides = [0, 2].filter(s => s !== excludeSide);
             let side = sides[Math.floor(Math.random() * sides.length)];
             let x, y;
             const vw = window.innerWidth;
             const vh = window.innerHeight;
 
-            if (side === 0) { // top
+            if (side === 0) { // top — just enough to hide mascot + bubble (~120px)
                 x = Math.random() * vw;
-                y = -mascotSize;
-            } else if (side === 1) { // right
-                x = vw + mascotSize;
-                y = Math.random() * vh;
-            } else if (side === 2) { // bottom
+                y = -120;
+            } else { // bottom — just below viewport
                 x = Math.random() * vw;
-                y = vh + mascotSize;
-            } else { // left
-                x = -mascotSize;
-                y = Math.random() * vh;
+                y = vh + 120;
             }
             return { x, y, side };
         }
 
         function getRandomExit(excludeSide) {
-            // Pick a random destination on a side that is NOT the entry side
-            let sides = [0, 1, 2, 3].filter(s => s !== excludeSide);
+            // Only top (0) and bottom (2), excluding entry side
+            let sides = [0, 2].filter(s => s !== excludeSide);
             let side = sides[Math.floor(Math.random() * sides.length)];
             let x, y;
             const vw = window.innerWidth;
             const vh = window.innerHeight;
 
-            if (side === 0) {
+            if (side === 0) { // exit top
                 x = Math.random() * vw;
-                y = -mascotSize;
-            } else if (side === 1) {
-                x = vw + mascotSize;
-                y = Math.random() * vh;
-            } else if (side === 2) {
+                y = -120;
+            } else { // exit bottom
                 x = Math.random() * vw;
-                y = vh + mascotSize;
-            } else {
-                x = -mascotSize;
-                y = Math.random() * vh;
+                y = vh + 120;
             }
             return { x, y, side };
         }
@@ -591,8 +579,8 @@
         // ── Speech bubble system (random delay between bubbles) ──────────────
 
         function showNextPhrase() {
-            phraseIndex = (phraseIndex + 1) % phrases.length;
             bubble.textContent = phrases[phraseIndex];
+            phraseIndex = (phraseIndex + 1) % phrases.length;
 
             // Reset animation
             bubble.classList.remove('visible');
