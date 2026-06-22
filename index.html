@@ -333,6 +333,40 @@
             margin-bottom: 2rem;
         }
 
+        /* Pricing Section */
+        .pricing-section {
+            background-color: var(--bg-color);
+            text-align: center;
+        }
+
+        .pricing-box {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .pricing-box p {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-size: 1.05rem;
+        }
+
+        .btn-outline {
+            display: inline-block;
+            background-color: transparent;
+            color: var(--accent);
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            border: 2px solid var(--accent);
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .btn-outline:hover {
+            background-color: var(--accent);
+            color: white;
+        }
+
         /* Footer */
         footer {
             padding: 40px 0;
@@ -381,6 +415,7 @@
                 <li><a href="#about">About</a></li>
                 <li><a href="#services">Services</a></li>
                 <li><a href="#portfolio">Portfolio</a></li>
+                <li><a href="#pricing">Pricing</a></li>
                 <li><a href="#book">Book Consultation</a></li>
             </ul>
         </div>
@@ -434,6 +469,14 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <section id="pricing" class="section pricing-section">
+        <div class="container pricing-box">
+            <h2 class="section-title">Pricing Plans</h2>
+            <p>Transparent, milestone-based pricing with no hidden fees. View the full breakdown to find the plan that fits your project.</p>
+            <a href="assets/Pricing Plans.pdf" target="_blank" class="btn">View Pricing Plans &rarr;</a>
         </div>
     </section>
 
